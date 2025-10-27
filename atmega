@@ -1,0 +1,40 @@
+#define F_CPU 1000000UL       //Horloge à 1Mhz
+#include <avr/io.h>
+#include <util/delay.h>
+#include <avr/sfr_defs.h>
+#include <avr/interrupt.h>
+ 
+int main(void) {
+      DDRC |= (1<<PC3);  
+      DDRC |= (1<<PC4);  
+      DDRC |= (1<<PC5);  // PIN PC5 en sortie (LED D3)
+      DDRD &= ~(1<<PD2);    // programmer la pin PD2 en entrée
+      PORTD |= (1<<PD2);   // mettre un pullup sur pin PD2
+      DDRD &= ~(1<<PD3);    // programmer la pin PD3 en entrée
+      PORTD |= (1<<PD3);   // mettre un pullup sur PD3
+      EICRA |=(1<<ISC01);  // mettre ISC01 à 1
+      EICRA |=(1<<ISC00);    // mettre ISC00 à 1
+      EICRA |=(1<<ISC11);  // mettre ISC11 à 1
+      EICRA &=~(1<<ISC10);    // mettre ISC10 à 0
+      EIMSK |=(1<<INT0);  // Autoriser l'interruption sur INT0 à travers EIMSK
+      EIMSK |=(1<<INT1);  // Autoriser l'interruption sur INT1 à travers EIMSK
+      sei();
+      while (1) {
+            PORTC |= (1<<PC5); /* Allumer la LED PORT PC3=1 */
+            _delay_ms(500);       // Attendre 500 milisecondes
+            PORTC &= ~(1<<PC5); /* Éteindre la LED PORT PC3=0 */
+            _delay_ms(500);       // Attendre 500 milisecondes
+      }
+}
+ 
+ISR(INT0_vect){
+      PORTC |=(1<<PC4);   // toggle le bit 4 du port C
+      _delay_ms(300);       // Attendre 300 milisecondes
+      PORTC &=~(1<<PC4);   // toggle le bit 4 du port C
+      _delay_ms(300);       // Attendre 300 milisecondes
+}
+ISR(INT1_vect){
+      PORTC |=(1<<PC3);   // toggle le bit 3 du port C
+      _delay_ms(400);       // Attendre 400 milisecondes
+      PORTC &=~(1<<PC3);   // toggle le bit 3 du port C
+      _delay_ms(400);       // Attendre 400 milisecondes
