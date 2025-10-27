@@ -5,7 +5,7 @@
  
 // --- WiFi configuration ---
 char ssid[] = SECRET_SSID;
-char pass[] = SECRET_PASS;
+char pass[] = SECRET_PASS; //mot de passe
 int keyIndex = 0;
  
 int ledPin = LED_BUILTIN;
