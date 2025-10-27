@@ -5,7 +5,7 @@
 #include <avr/interrupt.h>
  
 int main(void) {
-      DDRC |= (1<<PC3);  
+      DDRC |= (1<<PC3);  //pin 3
       DDRC |= (1<<PC4);  
       DDRC |= (1<<PC5);  // PIN PC5 en sortie (LED D3)
       DDRD &= ~(1<<PD2);    // programmer la pin PD2 en entrée
