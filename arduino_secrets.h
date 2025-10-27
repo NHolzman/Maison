@@ -1,2 +1,2 @@
 #define SECRET_SSID "GG_TEP"
-#define SECRET_PASS "lolaflorez&"
+#define SECRET_PASS "lolaflorez&" //password
