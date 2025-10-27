@@ -12,7 +12,7 @@ int direction = 1;         // Direction du mouvement (1 = vers 180°, -1 = vers 
 bool objetDetecte = false; // État détection objet
 
 void setup() {
-  pinMode(trigPin, OUTPUT);
+  pinMode(trigPin, OUTPUT); //allo
   pinMode(echoPin, INPUT);
   pinMode(ledPin, OUTPUT);
   
