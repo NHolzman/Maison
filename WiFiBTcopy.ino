@@ -4,7 +4,7 @@
 #include <Adafruit_MCP23X17.h>
  
 // --- WiFi configuration ---
-char ssid[] = SECRET_SSID;
+char ssid[] = SECRET_SSID; // usernname
 char pass[] = SECRET_PASS;
 int keyIndex = 0;
  
