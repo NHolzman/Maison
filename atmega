@@ -6,7 +6,7 @@
  
 int main(void) {
       DDRC |= (1<<PC3);  //pin 3
-      DDRC |= (1<<PC4);  
+      DDRC |= (1<<PC4);  // pin 4
       DDRC |= (1<<PC5);  // PIN PC5 en sortie (LED D3)
       DDRD &= ~(1<<PD2);    // programmer la pin PD2 en entrée
       PORTD |= (1<<PD2);   // mettre un pullup sur pin PD2
