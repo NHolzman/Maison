@@ -116,7 +116,7 @@ void setup() {
 }
  
 void loop() {
-  WiFiClient client = server.available();
+  WiFiClient client = server.available(); //allo
  
   if (client) {
     String currentLine = "";
