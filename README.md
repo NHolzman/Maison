@@ -5,6 +5,7 @@ Projet réalisé avec :
 - 2 × ESP32 (style Arduino)
 - MQTT + BLE
 - Capteurs reed, RFID, HC-SR04 sur servo, keypad 4×4, verrou électrique, buzzer, ampoule
+- Nodered et MQTT
 
 ## 1. Vue d’ensemble du système
 
@@ -22,6 +23,7 @@ Projet réalisé avec :
 | **Photon 2 #2**         | Buzzer + ampoule (état armé)                                                | MQTT                | Alarme sonore & visuelle |
 | **ESP32 #1**            | HC-SR04 monté sur servo (balayage)                                          | BLE uniquement      | Détection de présence dans l’entrée |
 | **ESP32 #2**            | Keypad 4×4, LCD 16×2, verrou électrique, reed switch porte                 | BLE + MQTT          | Interface porte + gestion accès |
+| **Ordinateur Linux**            | Gere tout les verifications                 | MQTT          | gere le MQTT et le lock |
 
 ## 2. Schéma d’architecture détaillé (png)
 
@@ -72,6 +74,8 @@ Le schematic est aussi attaché en bas, dans la section de téléchargement.
 | [usecase_alarme_fenetre.png](attachments/usecase_alarme_fenetre.png)                   | Use case alarme fenêtre                     |
 | [usecase_deverrouillage_porte.png](attachments/usecase_deverrouillage_porte.png)       | Use case déverrouillage code                |
 | [Schematic.pdf](attachments/Schematic.pdf)                                             | Le Schematic                                |
+| [Node-RED](https://github.com/NHolzman/Nodered)                                             | Nodered                                |
+
 
 ## 6. Prochaines étapes possibles
 
