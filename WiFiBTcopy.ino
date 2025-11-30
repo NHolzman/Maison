@@ -21,11 +21,11 @@ MqttClient mqttClient(wifiClient);
 const char broker[] = "io.adafruit.com";
 int port = 1883;
 
-const char publishTopic[] = "2474042/feeds/led";
-const char subscribeTopic[] = "2474042/feeds/led";
+const char publishTopic[] = "NHolzman/feeds/led";
+const char subscribeTopic[] = "NHolzman/feeds/led";
 
-const char username[] = "2474042";
-const char adafruitActiveKey[] = "aio_Uytv54eRZayULjJPn0JwRk6ZyJkp";  // Adafruit Active Key (yellow key)
+const char username[] = "NHolzman";
+const char adafruitActiveKey[] = "adafruit key";  // Adafruit Active Key (yellow key)
 const char clientId[] = "stupidArduinothatdies";                      // Must be unique
 
 const long intervalMQTT = 5000;
@@ -63,7 +63,7 @@ WiFiServer server(80);
 #define C11 12
 #define C12 3
 
-int sensorPorte = 12;
+int sensorPorte = 12; //capteur porte
 
 int countDigits(unsigned long number) {
   String str = String(number);
@@ -183,10 +183,9 @@ void setup() {
   lcd.write(5);
   lcd.setCursor(5, 1);
   lcd.write(6);
-
-
-
+  Serial.println("Point 2");
   pinMode(ledPin, OUTPUT);
+  Serial.println("Point 3");
 
   // --- BLE setup ---
   if (!BLE.begin()) {
@@ -194,7 +193,7 @@ void setup() {
     while (1)
       ;
   }
-
+  Serial.println("Point 4");
   BLE.setLocalName("LED");
   BLE.setAdvertisedService(ledService);
   ledService.addCharacteristic(switchCharacteristic);
@@ -202,21 +201,21 @@ void setup() {
   switchCharacteristic.writeValue(0);
   BLE.advertise();
   Serial.println("BLE LED Peripheral");
-
+  Serial.println("Point 5");
   // --- Wi-Fi setup ---
   if (WiFi.status() == WL_NO_MODULE) {
     Serial.println("Erreur: module WiFi non détecté !");
     while (true)
       ;
   }
-
+  Serial.println("Point 6");
   Serial.println("MCP23X17 Test...");
   if (!mcp.begin_I2C(0x20)) {
     Serial.println("Error connecting to MCP23X17.");
   }
 
   //pinMode(lock, OUTPUT);
-  pinMode(sensorPorte, INPUT_PULLUP);
+  pinMode(sensorPorte, INPUT_PULLUP); //pinMode de la porte
 
   for (int i = 0; i < 12; i++) {
     mcp.pinMode(keypadPins[i], INPUT_PULLUP);
@@ -258,10 +257,12 @@ void setup() {
   lcd.clear();
   lcd.setCursor(0, 1);
   lcd.print(ssid);
+  /*
   lcd.setCursor(11, 1);
   lcd.print("?");
   lcd.setCursor(12, 1);
   lcd.print("?");
+  */
   lcd.setCursor(13, 1);
   lcd.write(6);
   lcd.setCursor(14, 1);
@@ -290,43 +291,45 @@ void loop() {
       if (switchCharacteristic.value()) {
         //Serial.println("LED on (BLE)");
         digitalWrite(ledPin, HIGH);
-        lcd.setCursor(12, 1);
-        lcd.print("h");
-        lcd.setCursor(12, 1);
-        lcd.print(windowStatus);
+        //lcd.setCursor(12, 1);
+        //lcd.print("h");
+        //lcd.setCursor(12, 1);
+        //lcd.print(windowStatus);
         mqttClient.beginMessage(publishTopic);
         mqttClient.print("#close");
         mqttClient.endMessage();
-        lcd.setCursor(15, 0);
-        lcd.write(2);
-        lcd.setCursor(14, 0);
-        lcd.print("|");
-        lcd.setCursor(0, 0);
-        lcd.write(2);
-        lcd.print("?|");
-        lcd.write(3);
-        lcd.print("$");
-        lcd.setCursor(0, 1);
-        lcd.print(ssid);
-        lcd.setCursor(13, 1);
-        lcd.write(6);
-        lcd.setCursor(14, 1);
-        lcd.write(5);
-        lcd.setCursor(15, 1);
-        lcd.write(4);
-        lcd.backlight();
+        //lcd.setCursor(15, 0);
+        //lcd.write(2);
+        //lcd.setCursor(14, 0);
+       //lcd.print("|");
+        //lcd.setCursor(0, 0);
+        //lcd.write(2);
+       //lcd.print("?|");
+       //lcd.write(3);
+        //lcd.print("$");
+        //lcd.setCursor(0, 1);
+        //lcd.print(ssid);
+        //lcd.setCursor(13, 1);
+        //lcd.write(6);
+        //lcd.setCursor(14, 1);
+        //lcd.write(5);
+        //lcd.setCursor(15, 1);
+        //lcd.write(4);
+        //lcd.backlight();
       } else {
         //Serial.println("LED off (BLE)");
-        lcd.noBacklight();
+        //lcd.noBacklight();
         digitalWrite(ledPin, LOW);
-        lcd.setCursor(12, 1);
-        lcd.print("l");
+        //lcd.setCursor(12, 1);
+        //lcd.print("l");
+        /*
         mqttClient.beginMessage(publishTopic);
         mqttClient.print("#away");
         mqttClient.endMessage();
-        lcd.clear();
-        lcd.noBacklight();
-        position = 0;
+        */
+        //lcd.clear();
+        //lcd.noBacklight();
+        //position = 0;
       }
     }
   }
@@ -422,6 +425,7 @@ void loop() {
           Serial.print("Web attempt (*): !");
           Serial.println(position);
           mqttClient.beginMessage(publishTopic);
+          mqttClient.print("!");
           mqttClient.print(position);
           mqttClient.endMessage();
           mqttWait = true; 
@@ -505,7 +509,8 @@ void loop() {
     }
   }
 
-  if (mqttWait == 1) {
+  if (mqttWait == true || mqttWait == false) {
+    //Serial.println("Mqtt wait");
     int messageSize = mqttClient.parseMessage();
     if (messageSize > 0) {
       Serial.print("Received MQTT message: ");
@@ -518,13 +523,18 @@ void loop() {
       Serial.println();
       // Example: Process the message (e.g., control LED based on message)
       if (message == "#correctPassword") {
-        Serial.println("correctPassword");
+        mqttClient.beginMessage(publishTopic);
+        mqttClient.print("ACK");
+        mqttClient.endMessage();
+        Serial.println("correctPassword it will be acked");
         unlocked = 1;
         mqttWait = false;
         Serial.println("mqtt is no longer waiting...");
       } else if (message == "#incorrectPassword") {
-        Serial.println("incorrectPassword");
-        Serial.println("Wrong password");
+        mqttClient.beginMessage(publishTopic);
+        mqttClient.print("ACK");
+        mqttClient.endMessage();
+        Serial.println("incorrectPassword it will be acked");
         lcd.setCursor(0, 0);
         lcd.write(2);
         lcd.print("X|");
@@ -655,6 +665,7 @@ void loop() {
   }
 */
   receiveMQTTwindows();
+  //mqttClient.poll();
   // ---end of loop mqtt logic
 }
 
@@ -663,7 +674,7 @@ void resetI2C() {
 
   // End current I2C session
   Wire.end();
-  delay(25);
+  delayMicroseconds(25);
 
   // Attempt to release stuck devices by toggling SCL 9 times
   pinMode(SCL, OUTPUT);
@@ -686,6 +697,14 @@ void resetI2C() {
   // Reinitialize Wire/I2C
   Wire.begin();
   // Serial.println("I2C bus reset complete!");
+  //mqttClient.poll();
+  /*
+  if (digitalRead(sensorPorte)) { //logique de la porte
+  Serial.println("Porte fermee");
+  } else{
+  Serial.println("Porte ouverte");
+  }
+  */
 }
 
 void printWifiStatus() {
@@ -711,6 +730,7 @@ void receiveMQTTwindows() {  //petit partie qui detecte le MQTT pour gerer les f
     }
     Serial.println();
     // Example: Process the message (e.g., control LED based on message)
+    /*
     if (message == "#WIN_0") {
       windowStatus = 0;
       digitalWrite(ledPin, HIGH);
@@ -748,6 +768,7 @@ void receiveMQTTwindows() {  //petit partie qui detecte le MQTT pour gerer les f
       mqttClient.print("*WIN_3");
       mqttClient.endMessage();
     }
+    */
   }
   //mqttClient.poll();
 }
