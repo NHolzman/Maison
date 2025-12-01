@@ -8,29 +8,34 @@ int lock = A0;
 int buzzer = A2;
 int ampoule = D19;
 int alerte = 0;
-
-String inputString = "";
-bool stringComplete = false;
+int status = 0;
 
 const char* mqtt_server = "io.adafruit.com";
 const int mqtt_port = 1883;
-const char* mqtt_user = "cak47";
-const char* mqtt_password = "aio_izpf17WdFaECMYOyFMuRTnri0BBa";
+const char* mqtt_user = "NHolzman";
+const char* mqtt_password = "";
 char client_id[64] = "rocky";
-const char* publish_topic = "cak47/Feeds/Ampoulelock";
-const char* subscribe_topic = "cak47/Feeds/Ampoulelock";
+const char* publish_topic = "NHolzman/feeds/led";
+const char* subscribe_topic = "NHolzman/feeds/led";
 
 void callback(char* topic, byte* payload, unsigned int length);
 MQTT client(mqtt_server, mqtt_port, callback);
 
-long lastMsg = 0;
-int value = 0;
+unsigned long previousMillisUnlock = 0;
+const unsigned long intervalUnlock = 3000;
 
-String currentMQTT = "";  // Will store clean MQTT value
+unsigned long buzzerMillis = 0;
+bool buzzerState = LOW;
+
+unsigned long buzzerPulseMillis = 0;
+bool buzzerPulseActive = false;
+
+const unsigned long BUZZ_LONG_ON = 1250;
+const unsigned long BUZZ_LONG_OFF = 625;
+const unsigned long BUZZ_SHORT_PULSE = 200;
 
 void setup() {
   Serial.begin(9600);
-  inputString.reserve(200);
   pinMode(buzzer, OUTPUT);
   pinMode(ampoule, OUTPUT);
   pinMode(lock, OUTPUT);
@@ -41,7 +46,6 @@ void setup() {
 }
 
 void loop() {
-  // === MQTT Connection Handling ===
   if (client.isConnected()) {
     client.loop();
   } else {
@@ -55,115 +59,95 @@ void loop() {
     delay(5000);
   }
 
-  // === Publish every 5 seconds ===
-  //unsigned long now = millis();
-  //if (now - lastMsg > 5000) {
-    //lastMsg = now;
-    //char msg[50];
-    //snprintf(msg, sizeof(msg), "Photon 2 Hello #%d", value++);
-    //client.publish(publish_topic, msg);
-  //}
+  unsigned long now = millis();
 
-  // === Process Serial Input ===
-  if (stringComplete) {
-    inputString.trim();
-    Serial.println("Serial: " + inputString);
-
-    if (inputString == "buzzerPulse") {
-      Serial.println("> Buzzer Pulse Triggered");
-      digitalWrite(buzzer, HIGH);
-      delay(200);
-      digitalWrite(buzzer, LOW);
-    } 
-    else if (inputString == "buzzerLong") {
-      alerte = 1;
-      Serial.println("> Long Buzzer ON");
-    } 
-    else if (inputString == "buzzerLongOff") {
-      alerte = 0;
-      Serial.println("> Long Buzzer OFF");
-      digitalWrite(buzzer, LOW);
-    } 
-    else if (inputString == "ampoule") {
-      digitalWrite(ampoule, HIGH);
-      Serial.println("> Ampoule ON");
-    } 
-    else if (inputString == "ampouleOff") {
-      digitalWrite(ampoule, LOW);
-      Serial.println("> Ampoule OFF");
-    }
-
-    inputString = "";
-    stringComplete = false;
-  }
-
-  // === Long Buzzer Alert (Non-blocking inside loop) ===
-  if (alerte == 1) {
+  if (alerte == 2) {
     digitalWrite(buzzer, HIGH);
-    delay(1250);
-    digitalWrite(buzzer, LOW);
-    delay(625);
-  } else if (alerte == 2) {
-    digitalWrite(buzzer, HIGH); //earrape
-  }
-
-  // === Clear currentMQTT after use (optional, prevents repeat) ===
-  // Remove this if you want "dog" to keep triggering until new message
-  // currentMQTT = "";
-}
-
-void serialEvent() {
-  while (Serial.available()) {
-    char inChar = (char)Serial.read();
-    inputString += inChar;
-    if (inChar == '\n') {
-      stringComplete = true;
+    digitalWrite(ampoule, HIGH);
+  } 
+  else if (alerte == 1) {
+    if (now - buzzerMillis >= (buzzerState ? BUZZ_LONG_ON : BUZZ_LONG_OFF)) {
+      buzzerState = !buzzerState;
+      digitalWrite(buzzer, buzzerState);
+      digitalWrite(ampoule, !buzzerState);
+      buzzerMillis = now;
+    }
+  } 
+  else {
+    digitalWrite(ampoule, (status == 1) ? LOW : HIGH);
+    if (buzzerPulseActive) {
+      if (now - buzzerPulseMillis >= BUZZ_SHORT_PULSE) {
+        buzzerPulseActive = false;
+        digitalWrite(buzzer, LOW);
+      } else {
+        digitalWrite(buzzer, HIGH);
+      }
+    } else {
+      digitalWrite(buzzer, LOW);
     }
   }
+
+  if (status == 1) {
+    unsigned long currentMillis = now;
+    static bool actionDone = false;
+
+    if (!actionDone) {
+      digitalWrite(ampoule, LOW);
+      digitalWrite(lock, HIGH);
+      Serial.println("> correctPassword");
+      previousMillisUnlock = currentMillis;
+      actionDone = true;
+    }
+
+    if (currentMillis - previousMillisUnlock >= intervalUnlock) {
+      status = 0;
+      actionDone = false;
+    }
+  }
+
+  if (status == 0 && alerte == 0) {
+    digitalWrite(ampoule, HIGH);
+    digitalWrite(lock, LOW);
+  }
 }
 
-// === MQTT CALLBACK: Clean payload and store ===
 void callback(char* topic, byte* payload, unsigned int length) {
   char buffer[length + 1];
   memcpy(buffer, payload, length);
-  buffer[length] = '\0';  // Null terminate
+  buffer[length] = '\0';
 
-  // Convert to String and TRIM newlines/spaces
   String received = String(buffer);
-  received.trim();  // <-- Removes \n, \r, spaces
+  received.trim();
 
   Serial.print("MQTT Received: [");
   Serial.print(received);
   Serial.println("]");
-    if (received == "buzzerPulse") {
-      Serial.println("> Buzzer Pulse Triggered");
-      digitalWrite(buzzer, HIGH);
-      delay(200);
-      digitalWrite(buzzer, LOW);
-    } 
-    else if (received == "buzzerLong") {
-      alerte = 1;
-      Serial.println("> Long Buzzer ON");
-    } 
-    else if (received == "buzzerBuzz") {
-      alerte = 2;
-      Serial.println("> Buzz Buzzer ON");
-    } 
-    else if (received == "buzzerOff") {
-      alerte = 0;
-      Serial.println("> Buzzer OFF");
-      digitalWrite(buzzer, LOW);
-    } 
-    else if (received == "ampoule") {
-      digitalWrite(ampoule, HIGH);
-      Serial.println("> Ampoule ON");
-    } 
-    else if (received == "ampouleOff") {
-      digitalWrite(ampoule, LOW);
-      Serial.println("> Ampoule OFF");
-    } else if (received == "#unlock") {
-      digitalWrite(lock, HIGH);
-      Serial.println("> unlock");
-    }
-  currentMQTT = received;  // Store cleaned value
+
+  if (received == "#close") {
+    Serial.println("> Buzzer Pulse Triggered");
+    buzzerPulseActive = true;
+    buzzerPulseMillis = millis();
+    digitalWrite(buzzer, HIGH);
+  } 
+  else if (received == "#incorrectPassword" && alerte != 2) {
+    alerte = 1;
+    buzzerState = LOW;
+    buzzerMillis = millis();
+    Serial.println("> Incorrect Password → Flashing Alert");
+  } 
+  else if (received == "#buzzerBuzz") {
+    alerte = 2;
+    Serial.println("> Buzz Buzzer + Light ON (continuous)");
+  } 
+  else if (received == "#correctPassword") {
+    alerte = 0;
+    status = 1;
+    digitalWrite(buzzer, LOW);
+    digitalWrite(ampoule, LOW);
+    Serial.println("> Correct Password");
+  } 
+  else if (received == "#ampoule") {
+    digitalWrite(ampoule, HIGH);
+    Serial.println("> Ampoule ON (manual)");
+  }
 }
